@@ -10,9 +10,9 @@ export interface ApiResponse<T> {
 export interface Plan {
   id: number;
   name: string;
-  price_per_employee: number;
-  created_at?: string;
-  updated_at?: string;
+  pricePerEmployee: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Company types

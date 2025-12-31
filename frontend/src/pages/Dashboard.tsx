@@ -83,7 +83,7 @@ const Dashboard: React.FC = () => {
     try {
       const response = await employeeAPI.add(newEmployee);
       if (response.data.success && response.data.data) {
-        alert(`Employee added! Token: ${response.data.data.token}`);
+        alert(`Employee added succesfully!` );
         setNewEmployee({ name: '', email: '', password: '' });
         setShowAddEmployee(false);
         loadEmployees();

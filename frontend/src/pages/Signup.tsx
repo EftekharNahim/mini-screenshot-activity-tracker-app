@@ -26,6 +26,7 @@ const Signup: React.FC = () => {
   const loadPlans = async () => {
     try {
       const response = await companyAPI.getPlans();
+      console.log('Plans response:', response);
       if (response.data.success && response.data.data) {
         setPlans(response.data.data);
         const firstPlanId = response.data.data?.[0]?.id;
@@ -150,7 +151,7 @@ const Signup: React.FC = () => {
             >
               {plans.map(plan => (
                 <option key={plan.id} value={plan.id}>
-                  {plan.name} - ${plan.price_per_employee}/employee
+                  {plan.name} - ${plan.pricePerEmployee}/employee
                 </option>
               ))}
             </select>
