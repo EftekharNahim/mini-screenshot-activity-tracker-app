@@ -1,23 +1,24 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Screenshot from '#models/screenshot'
 import Employee from '#models/employee'
-import { cuid } from '@adonisjs/core/helpers'
-import app from '@adonisjs/core/services/app'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
+import cloudinary from '#config/cloudinary'
 
 export default class ScreenshotsController {
   /**
-   * Upload screenshot (Employee only)
+   * Upload screenshot to Cloudinary (Employee only)
    */
   async upload({ request, response }: HttpContext) {
     try {
       const employee = request.employee!
+      
+      // Get the uploaded file
       const file = request.file('screenshot', {
         size: '5mb',
         extnames: ['jpg', 'jpeg', 'png', 'gif', 'bmp']
       })
-
+     console.log('Received file:', file)
       if (!file) {
         return response.status(400).json({
           success: false,
@@ -28,28 +29,31 @@ export default class ScreenshotsController {
       if (!file.isValid) {
         return response.status(400).json({
           success: false,
-          message: file.errors[0].message
+          message: file.errors[0]?.message || 'Invalid file'
         })
       }
 
-      // Generate unique filename
-      const fileName = `${employee.id}-${cuid()}.${file.extname}`
-      const uploadPath = app.makePath('storage/uploads/screenshots')
-      
-      // Move file
-      await file.move(uploadPath, {
-        name: fileName,
-        overwrite: false
+      console.log('Uploading file to Cloudinary...', file.tmpPath)
+
+      // Upload to Cloudinary
+      const uploadResult = await cloudinary.uploader.upload(file.tmpPath!, {
+        folder: `screenshots/${employee.companyId}/${employee.id}`,
+        resource_type: 'image',
+        public_id: `screenshot-${Date.now()}`,
       })
 
-      const filePath = `storage/uploads/screenshots/${fileName}`
+      const url = uploadResult.secure_url
+      const publicId = uploadResult.public_id
       
-      // Create screenshot record
+      console.log('Cloudinary URL:', url)
+      console.log('Public ID:', publicId)
+
+      // Create screenshot record in database
       const screenshot = await Screenshot.create({
         companyId: employee.companyId,
         employeeId: employee.id,
-        filePath: filePath,
-        fileSize: file.size,
+        filePath: url, // Store Cloudinary URL
+        fileSize: uploadResult.bytes,
         uploadedAt: DateTime.now()
       })
 
@@ -60,10 +64,12 @@ export default class ScreenshotsController {
           id: screenshot.id,
           uploaded_at: screenshot.uploadedAt,
           file_size: screenshot.fileSize,
-          file_path: screenshot.filePath
+          file_path: screenshot.filePath,
+          cloudinary_public_id: publicId
         }
       })
     } catch (error) {
+      console.error('Upload error:', error)
       return response.status(500).json({
         success: false,
         message: 'Error uploading screenshot',
@@ -155,7 +161,7 @@ export default class ScreenshotsController {
 
         const screenshotData = {
           id: screenshot.id,
-          file_path: screenshot.file_path,
+          file_path: screenshot.file_path, // This is now Cloudinary URL
           file_size: screenshot.file_size,
           uploaded_at: screenshot.uploaded_at,
           minute: screenshot.screenshot_minute
@@ -241,9 +247,10 @@ export default class ScreenshotsController {
   }
 
   /**
-   * Serve screenshot file (Admin only)
+   * Delete screenshot (Admin only)
+   * Now also deletes from Cloudinary
    */
-  async file({ request, response, params }: HttpContext) {
+  async destroy({ request, response, params }: HttpContext) {
     try {
       const companyId = request.company!.id
       const screenshotId = params.id
@@ -268,13 +275,33 @@ export default class ScreenshotsController {
         })
       }
 
-      // Send file
-      const filePath = app.makePath(screenshot.filePath)
-      return response.download(filePath)
+      // Extract public_id from Cloudinary URL
+      // URL format: https://res.cloudinary.com/cloud_name/image/upload/v1234567890/screenshots/1/2/screenshot-1234567890.jpg
+      const urlParts = screenshot.filePath.split('/')
+      const fileName = urlParts[urlParts.length - 1].split('.')[0]
+      const folder = urlParts.slice(-4, -1).join('/')
+      const publicId = `${folder}/${fileName}`
+
+      // Delete from Cloudinary
+      try {
+        await cloudinary.uploader.destroy(publicId)
+        console.log('Deleted from Cloudinary:', publicId)
+      } catch (cloudinaryError) {
+        console.error('Cloudinary deletion error:', cloudinaryError)
+        // Continue with database deletion even if Cloudinary fails
+      }
+
+      // Delete from database
+      await screenshot.delete()
+
+      return response.json({
+        success: true,
+        message: 'Screenshot deleted successfully'
+      })
     } catch (error) {
       return response.status(500).json({
         success: false,
-        message: 'Error retrieving file',
+        message: 'Error deleting screenshot',
         error: error.message
       })
     }

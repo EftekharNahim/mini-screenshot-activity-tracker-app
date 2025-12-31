@@ -22,19 +22,19 @@ router.group(() => {
   // Admin only routes
   router.post('/add', '#controllers/employees_controller.add')
     .use(middleware.authAdmin())
-  
+
   router.get('/list', '#controllers/employees_controller.list')
     .use(middleware.authAdmin())
-  
+
   router.get('/search', '#controllers/employees_controller.search')
     .use(middleware.authAdmin())
-  
+
   router.patch('/:id/toggle-status', '#controllers/employees_controller.toggleStatus')
     .use(middleware.authAdmin())
-  
+
   // Employee routes
   router.post('/login', '#controllers/employees_controller.login')
-  
+
   router.post('/rotate-token', '#controllers/employees_controller.rotateToken')
     .use(middleware.authEmployee())
 }).prefix('/api/employee')
@@ -44,14 +44,17 @@ router.group(() => {
   // Employee only
   router.post('/upload', '#controllers/screenshots_controller.upload')
     .use(middleware.authEmployee())
-  
+
   // Admin only
   router.get('/dashboard', '#controllers/screenshots_controller.dashboard')
     .use(middleware.authAdmin())
-  
+
   router.get('/summary/:employee_id', '#controllers/screenshots_controller.summary')
     .use(middleware.authAdmin())
-  
+
   router.get('/file/:id', '#controllers/screenshots_controller.file')
+    .use(middleware.authAdmin())
+
+  router.delete('/file/:id', '#controllers/screenshots_controller.destroy')
     .use(middleware.authAdmin())
 }).prefix('/api/screenshots')
