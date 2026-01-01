@@ -9,9 +9,13 @@ export default class extends BaseSchema {
       table.string('full_name').nullable()
       table.string('email', 254).notNullable().unique()
       table.string('password').notNullable()
+      table.enum('role', ['employee', 'admin']).notNullable().defaultTo('employee')
+      table.integer('company_id').unsigned().notNullable()
 
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()
+
+      table.foreign('company_id').references('companies.id').onDelete('CASCADE')
     })
   }
 

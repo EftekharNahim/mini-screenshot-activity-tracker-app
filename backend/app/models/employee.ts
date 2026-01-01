@@ -20,9 +20,6 @@ export default class Employee extends BaseModel {
   @column({ serializeAs: null })
   declare password: string
 
-  @column({ serializeAs: null })
-  declare jwtToken: string | null
-
   @column()
   declare tokenVersion: number
 

@@ -10,7 +10,6 @@ export default class extends BaseSchema {
       table.string('name', 255).notNullable()
       table.string('email', 255).notNullable().unique()
       table.string('password', 255).notNullable()
-      table.text('jwt_token').nullable()
       table.integer('token_version').defaultTo(0)
       table.boolean('is_active').defaultTo(true)
       table.timestamp('created_at', { useTz: true })

@@ -1,15 +1,20 @@
-import { defineConfig } from '@adonisjs/auth'
-import { tokensGuard, tokensUserProvider } from '@adonisjs/auth/access_tokens'
+import { defineConfig } from '@adonisjs/auth';
+import { jwtGuard } from '@maximemrf/adonisjs-jwt/jwt_config'
 import type { InferAuthenticators, InferAuthEvents, Authenticators } from '@adonisjs/auth/types'
 
+
 const authConfig = defineConfig({
-  default: 'api',
+  default: 'jwt',
+
   guards: {
-    api: tokensGuard({
-      provider: tokensUserProvider({
-        tokens: 'accessTokens',
-        model: () => import('#models/user')
-      }),
+    jwt: jwtGuard({
+      secret: process.env.JWT_SECRET!,
+      expiresIn: '', // No expiration for employee tokens',
+    }),
+
+    admin: jwtGuard({
+      secret: process.env.JWT_ADMIN_SECRET!,
+      expiresIn: '30d',
     }),
   },
 })
@@ -17,8 +22,7 @@ const authConfig = defineConfig({
 export default authConfig
 
 /**
- * Inferring types from the configured auth
- * guards.
+ * Types
  */
 declare module '@adonisjs/auth/types' {
   export interface Authenticators extends InferAuthenticators<typeof authConfig> {}

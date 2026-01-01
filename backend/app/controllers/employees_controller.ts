@@ -36,9 +36,8 @@ export default class EmployeesController {
 
       // Generate JWT token
       const token = JwtService.generateEmployeeToken(employee.id, 0)
-      
-      employee.jwtToken = token
-      await employee.save()
+
+
 
       return response.status(201).json({
         success: true,
@@ -140,7 +139,7 @@ export default class EmployeesController {
 
       // Verify password
       const isValidPassword = await hash.verify(employee.password, payload.password)
-      
+
       if (!isValidPassword) {
         return response.status(401).json({
           success: false,
@@ -148,13 +147,9 @@ export default class EmployeesController {
         })
       }
 
-      // Return existing token or generate new one
-      let token = employee.jwtToken
-      if (!token) {
-        token = JwtService.generateEmployeeToken(employee.id, employee.tokenVersion)
-        employee.jwtToken = token
-        await employee.save()
-      }
+      // Generate token on the fly (do NOT save to DB)
+      const token = JwtService.generateEmployeeToken(employee.id, employee.tokenVersion)
+
 
       return response.json({
         success: true,
@@ -179,26 +174,26 @@ export default class EmployeesController {
     }
   }
 
-  /**
-   * Rotate employee token
-   */
-  async rotateToken({ request, response }: HttpContext) {
-    try {
-      const employeeId = request.employee!.id
-      const newToken = await JwtService.rotateEmployeeToken(employeeId)
+  // /**
+  //  * Rotate employee token
+  //  */
+  // async rotateToken({ request, response }: HttpContext) {
+  //   try {
+  //     const employeeId = request.employee!.id
+  //     const newToken = await JwtService.rotateEmployeeToken(employeeId)
 
-      return response.json({
-        success: true,
-        message: 'Token rotated successfully',
-        data: { token: newToken }
-      })
-    } catch (error) {
-      return response.status(500).json({
-        success: false,
-        message: 'Error rotating token'
-      })
-    }
-  }
+  //     return response.json({
+  //       success: true,
+  //       message: 'Token rotated successfully',
+  //       data: { token: newToken }
+  //     })
+  //   } catch (error) {
+  //     return response.status(500).json({
+  //       success: false,
+  //       message: 'Error rotating token'
+  //     })
+  //   }
+  // }
 
   /**
    * Toggle employee status (Admin only)
