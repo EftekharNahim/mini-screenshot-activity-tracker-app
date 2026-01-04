@@ -54,7 +54,7 @@ export default class ScreenshotsController {
         employeeId: employee.id,
         filePath: url, // Store Cloudinary URL
         fileSize: uploadResult.bytes,
-        uploadedAt: DateTime.now()
+        uploadedAt: DateTime.now(),
       })
 
       return response.status(201).json({

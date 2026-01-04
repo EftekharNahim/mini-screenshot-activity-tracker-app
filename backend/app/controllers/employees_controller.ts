@@ -174,26 +174,26 @@ export default class EmployeesController {
     }
   }
 
-  // /**
-  //  * Rotate employee token
-  //  */
-  // async rotateToken({ request, response }: HttpContext) {
-  //   try {
-  //     const employeeId = request.employee!.id
-  //     const newToken = await JwtService.rotateEmployeeToken(employeeId)
+  /**
+   * Rotate employee token
+   */
+  async rotateToken({ request, response }: HttpContext) {
+    try {
+      const employeeId = request.employee!.id
+      const newToken = await JwtService.rotateEmployeeToken(employeeId)
 
-  //     return response.json({
-  //       success: true,
-  //       message: 'Token rotated successfully',
-  //       data: { token: newToken }
-  //     })
-  //   } catch (error) {
-  //     return response.status(500).json({
-  //       success: false,
-  //       message: 'Error rotating token'
-  //     })
-  //   }
-  // }
+      return response.json({
+        success: true,
+        message: 'Token rotated successfully',
+        data: { token: newToken }
+      })
+    } catch (error) {
+      return response.status(500).json({
+        success: false,
+        message: 'Error rotating token'
+      })
+    }
+  }
 
   /**
    * Toggle employee status (Admin only)

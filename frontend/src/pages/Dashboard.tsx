@@ -14,6 +14,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { employeeAPI, screenshotAPI } from "../services/api";
 import type { Employee, DashboardData, Company } from "../types";
+// import { DateTime } from "luxon";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -375,7 +376,13 @@ const Dashboard: React.FC = () => {
                                         <p className="text-xs text-gray-600 truncate">
                                           {new Date(
                                             screenshot.uploaded_at
-                                          ).toLocaleTimeString()}
+                                          ).toLocaleTimeString("en-US", {
+                                            timeZone: "UTC",
+                                            hour: "numeric",
+                                            minute: "2-digit",
+                                            second: "2-digit",
+                                            hour12: true,
+                                          })}
                                         </p>
                                         <p className="text-xs text-gray-500">
                                           {(

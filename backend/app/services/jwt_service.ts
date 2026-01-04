@@ -41,20 +41,20 @@ export class JwtService {
     return jwt.sign(payload, env.get('JWT_ADMIN_SECRET'), { expiresIn: '30d' })
   }
 
-  // /**
-  //  * Auto-rotate employee token by incrementing version
-  //  */
-  // static async rotateEmployeeToken(employeeId: number): Promise<string> {
-  //   const employee = await Employee.findOrFail(employeeId)
+  /**
+   * Auto-rotate employee token by incrementing version
+   */
+  static async rotateEmployeeToken(employeeId: number): Promise<string> {
+    const employee = await Employee.findOrFail(employeeId)
     
-  //   employee.tokenVersion += 1
-  //   const newToken = this.generateEmployeeToken(employee.id, employee.tokenVersion)
+    employee.tokenVersion += 1
+    const newToken = this.generateEmployeeToken(employee.id, employee.tokenVersion)
     
-  //   employee.jwtToken = newToken
-  //   await employee.save()
+    // employee.jwtToken = newToken
+    // await employee.save()
     
-  //   return newToken
-  // }
+    return newToken
+  }
 
   /**
    * Verify employee token and check version
