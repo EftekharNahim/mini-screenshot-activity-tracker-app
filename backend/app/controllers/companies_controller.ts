@@ -4,6 +4,7 @@ import Plan from '#models/plan'
 import hash from '@adonisjs/core/services/hash'
 import JwtService from '#services/jwt_service'
 import { companySignupValidator , companyLoginValidator } from '../validators/company_validator.js'
+import User from '#models/user'
 
 
 export default class CompaniesController {
@@ -32,19 +33,23 @@ export default class CompaniesController {
   async signup({ request, response }: HttpContext) {
     try {
       const payload = await request.validateUsing(companySignupValidator)
-      
+      console.log(payload);
       // Check if email already exists
-      const existingCompany = await Company.findBy('owner_email', payload.owner_email)
+      const existingCompany = await User.findBy('email', payload.owner_email)
+      console.log(existingCompany);
       if (existingCompany) {
         return response.status(400).json({
           success: false,
           message: 'Email already registered'
+          
         })
       }
 
       // Check if plan exists
       const plan = await Plan.find(payload.plan_id)
+     console.log('plan : ',plan);
       if (!plan) {
+        console.log('Invalid plan selected');
         return response.status(400).json({
           success: false,
           message: 'Invalid plan selected'
@@ -53,18 +58,28 @@ export default class CompaniesController {
 
       // Hash password
       const hashedPassword = await hash.make(payload.password)
-
+   console.log('Hashed password:', payload);
       // Create company
       const company = await Company.create({
-        ownerName: payload.owner_name,
-        ownerEmail: payload.owner_email,
         companyName: payload.company_name,
-        ownerPassword: hashedPassword,
         planId: payload.plan_id
       })
 
+      console.log('Company created:', company);
+
+      // Create admin user
+      await User.create({
+        companyId: company.id,
+        name: payload.owner_name,
+        email: payload.owner_email,
+        password: hashedPassword,
+        role: 'admin',
+        tokenVersion: 0
+      })
+  console.log('Company created with ID:', company.id);
       // Generate admin token
       const token = JwtService.generateAdminToken(company.id, company.id)
+      console.log('Generated token:', token);
 
       return response.status(201).json({
         success: true,
@@ -72,15 +87,15 @@ export default class CompaniesController {
         data: {
           company: {
             id: company.id,
-            owner_name: company.ownerName,
-            owner_email: company.ownerEmail,
             company_name: company.companyName,
             plan_id: company.planId
+
           },
           token
         }
       })
     } catch (error) {
+      console.log("🚀 ~ CompaniesController ~ signup ~ error:", error)
       return response.status(500).json({
         success: false,
         message: 'Error creating company account',
@@ -96,21 +111,20 @@ export default class CompaniesController {
     try {
       const payload = await request.validateUsing(companyLoginValidator)
 
-      // Find company
-      const company = await Company.query()
-        .where('owner_email', payload.email)
-        .preload('plan')
+      // Find user
+      const user = await User.query()
+        .where('email', payload.email)
+        .andWhere('role', 'admin')  
         .first()
 
-      if (!company) {
+      if (!user) {
         return response.status(401).json({
           success: false,
           message: 'Invalid credentials'
         })
       }
-
       // Verify password
-      const isValidPassword = await hash.verify(company.ownerPassword, payload.password)
+      const isValidPassword = await hash.verify(user.password, payload.password)
       
       if (!isValidPassword) {
         return response.status(401).json({
@@ -118,7 +132,15 @@ export default class CompaniesController {
           message: 'Invalid credentials'
         })
       }
-
+      // Fetch company
+      const company = await Company.find(user.companyId)  
+      if (!company) {
+        return response.status(500).json({
+          success: false,
+          message: 'Associated company not found'
+        })
+      }
+      await company.load('plan')
       // Generate token
       const token = JwtService.generateAdminToken(company.id, company.id)
 
@@ -128,8 +150,8 @@ export default class CompaniesController {
         data: {
           company: {
             id: company.id,
-            owner_name: company.ownerName,
-            owner_email: company.ownerEmail,
+            owner_name: user.name,
+            owner_email: user.email,
             company_name: company.companyName,
             plan_id: company.planId,
             plan_name: company.plan?.name,

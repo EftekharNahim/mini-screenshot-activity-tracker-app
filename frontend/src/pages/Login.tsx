@@ -1,43 +1,60 @@
-import React, { useState } from 'react';
-import type { FormEvent, ChangeEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { companyAPI } from '../services/api';
-import type { CompanyLoginData } from '../types';
+import React, { useState } from "react";
+import type { FormEvent, ChangeEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { companyAPI } from "../services/api";
+import type { CompanyLoginData } from "../types";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState<CompanyLoginData>({
-    email: '',
-    password: ''
+    email: "",
+    password: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateField = (name: string, value: string | number) => {
+    switch (name) {
+      case "email":
+        if (!value) return "Email is required";
+        if (!/^\S+@\S+\.\S+$/.test(value as string))
+          return "Invalid email format";
+        return "";
+
+      case "password":
+        if (!value) return "Password is required";
+        if ((value as string).length < 6)
+          return "Minimum 6 characters required";
+        return "";
+
+      default:
+        return "";
+    }
+  };
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError('');
+    const errorMsg = validateField(e.target.name, e.target.value);
+    setErrors({ ...errors, [e.target.name]: errorMsg });
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       const response = await companyAPI.login(formData);
-      
+
       if (response.data.success && response.data.data) {
-        login(
-          response.data.data.token,
-          'admin',
-          response.data.data.company
-        );
-        navigate('/dashboard');
+        login(response.data.data.token, "admin", response.data.data.company);
+        navigate("/dashboard");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+      setError(err.response?.data?.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -49,7 +66,7 @@ const Login: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">
           Admin Login
         </h1>
-        
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
             {error}
@@ -66,9 +83,17 @@ const Login: React.FC = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+               className={`w-full px-4 py-2 border rounded-lg focus:ring-2
+                         ${
+                           errors.email
+                             ? "border-red-500"
+                             : "border-gray-300"
+                         }`}
               required
             />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+            )}
           </div>
 
           <div>
@@ -80,9 +105,17 @@ const Login: React.FC = () => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2
+                         ${
+                           errors.password
+                             ? "border-red-500"
+                             : "border-gray-300"
+                         }`}
               required
             />
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+            )}
           </div>
 
           <button
@@ -90,14 +123,14 @@ const Login: React.FC = () => {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
         <p className="text-center mt-4 text-sm text-gray-600">
-          Don't have an account?{' '}
-          <button 
-            onClick={() => navigate('/signup')} 
+          Don't have an account?{" "}
+          <button
+            onClick={() => navigate("/signup")}
             className="text-blue-600 hover:underline"
           >
             Sign up

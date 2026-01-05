@@ -2,6 +2,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import JwtService from '#services/jwt_service'
 import Company from '#models/company'
+import User from '#models/user'
 
 export default class AuthAdminMiddleware {
   async handle({ request, response }: HttpContext, next: NextFn) {
@@ -11,10 +12,7 @@ export default class AuthAdminMiddleware {
       const decoded = JwtService.verifyAdminToken(token)
       
       // Fetch company details
-      const company = await Company.query()
-        .where('id', decoded.companyId)
-        .preload('plan')
-        .firstOrFail()
+      const company = await Company.findOrFail(decoded.companyId) 
       
       // Attach to request
       request.company = {

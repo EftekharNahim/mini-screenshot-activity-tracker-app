@@ -1,6 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Screenshot from '#models/screenshot'
-import Employee from '#models/employee'
+import User from '#models/user'
 import { DateTime } from 'luxon'
 import db from '@adonisjs/lucid/services/db'
 import cloudinary from '#config/cloudinary'
@@ -95,9 +95,10 @@ export default class ScreenshotsController {
       }
 
       // Verify employee belongs to this company
-      const employee = await Employee.query()
+      const employee = await User.query()
         .where('id', employeeId)
         .where('company_id', companyId)
+        .andWhere('role', 'employee')
         .first()
 
       if (!employee) {
@@ -207,9 +208,10 @@ export default class ScreenshotsController {
       const endDate = request.input('end_date')
 
       // Verify employee belongs to this company
-      const employee = await Employee.query()
+      const employee = await User.query()
         .where('id', employeeId)
         .where('company_id', companyId)
+        .andWhere('role', 'employee')
         .first()
 
       if (!employee) {

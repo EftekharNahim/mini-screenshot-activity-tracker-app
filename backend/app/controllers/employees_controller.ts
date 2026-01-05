@@ -1,8 +1,8 @@
 import type { HttpContext } from '@adonisjs/core/http'
-import Employee from '#models/employee'
 import hash from '@adonisjs/core/services/hash'
 import JwtService from '#services/jwt_service'
 import { employeeCreateValidator, employeeLoginValidator } from '../validators/employee_validators.js'
+import User from '#models/user'
 
 export default class EmployeesController {
   /**
@@ -14,7 +14,7 @@ export default class EmployeesController {
       const companyId = request.company!.id
 
       // Check if email already exists
-      const existingEmployee = await Employee.findBy('email', payload.email)
+      const existingEmployee = await User.findBy('email', payload.email)
       if (existingEmployee) {
         return response.status(400).json({
           success: false,
@@ -26,7 +26,7 @@ export default class EmployeesController {
       const hashedPassword = await hash.make(payload.password)
 
       // Create employee
-      const employee = await Employee.create({
+      const employee = await User.create({
         companyId,
         name: payload.name,
         email: payload.email,
@@ -65,11 +65,14 @@ export default class EmployeesController {
   async list({ request, response }: HttpContext) {
     try {
       const companyId = request.company!.id
+      
 
-      const employees = await Employee.query()
+      const employees = await User.query()
         .where('company_id', companyId)
+        .andWhere('role', 'employee')
         .select('id', 'name', 'email', 'is_active', 'created_at')
         .orderBy('created_at', 'desc')
+        
 
       return response.json({
         success: true,
@@ -98,9 +101,10 @@ export default class EmployeesController {
         })
       }
 
-      const employees = await Employee.query()
+      const employees = await User.query()
         .where('company_id', companyId)
         .where('name', 'like', `%${query}%`)
+        .andWhere('role', 'employee')
         .select('id', 'name', 'email', 'is_active', 'created_at')
         .orderBy('name', 'asc')
 
@@ -124,9 +128,10 @@ export default class EmployeesController {
       const payload = await request.validateUsing(employeeLoginValidator)
 
       // Find employee
-      const employee = await Employee.query()
+      const employee = await User.query()
         .where('email', payload.email)
         .where('is_active', true)
+        .andWhere('role', 'employee')
         .preload('company')
         .first()
 
@@ -203,9 +208,10 @@ export default class EmployeesController {
       const companyId = request.company!.id
       const employeeId = params.id
 
-      const employee = await Employee.query()
+      const employee = await User.query()
         .where('id', employeeId)
         .where('company_id', companyId)
+        .andWhere('role', 'employee')
         .first()
 
       if (!employee) {

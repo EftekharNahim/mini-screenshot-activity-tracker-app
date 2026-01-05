@@ -14,7 +14,6 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { employeeAPI, screenshotAPI } from "../services/api";
 import type { Employee, DashboardData, Company } from "../types";
-// import { DateTime } from "luxon";
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();

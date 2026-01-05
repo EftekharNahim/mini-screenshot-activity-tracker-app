@@ -18,7 +18,7 @@ export default class extends BaseSchema {
       table.integer('screenshot_minute').nullable()
 
       table.foreign('company_id').references('companies.id').onDelete('CASCADE')
-      table.foreign('employee_id').references('employees.id').onDelete('CASCADE')
+      table.foreign('employee_id').references('users.id').onDelete('CASCADE')
 
       // Performance indexes
       table.index(['employee_id', 'screenshot_date'])

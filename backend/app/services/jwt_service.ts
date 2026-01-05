@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 import env from '#start/env'
-import Employee from '#models/employee'
+import Employee from '#models/user'
 
 interface EmployeePayload {
   id: number

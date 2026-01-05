@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import JwtService from '#services/jwt_service'
-import Employee from '#models/employee'
+import Employee from '#models/user'
 
 export default class AuthEmployeeMiddleware {
   public async handle({ request, response }: HttpContext, next: NextFn) {
