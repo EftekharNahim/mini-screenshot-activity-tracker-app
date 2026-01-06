@@ -1,7 +1,7 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import JwtService from '#services/jwt_service'
-import Employee from '#models/user'
+import User from '#models/user'
 
 export default class AuthEmployeeMiddleware {
   public async handle({ request, response }: HttpContext, next: NextFn) {
@@ -11,8 +11,9 @@ export default class AuthEmployeeMiddleware {
       const decoded = await JwtService.verifyEmployeeToken(token)
 
       // Fetch employee details with company in ONE query
-      const employee = await Employee.query()
+      const employee = await User.query()
         .where('id', decoded.id)
+        .andWhere('role', 'employee')
         .preload('company')
         .firstOrFail()
 

@@ -10,8 +10,6 @@ declare module '@adonisjs/core/http' {
     company?: {
       id: number
       companyName: string
-      ownerName: string
-      ownerEmail: string
       planId: number | null
       plan?: any
     }

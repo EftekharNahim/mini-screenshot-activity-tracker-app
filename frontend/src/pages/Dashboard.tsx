@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import type { FormEvent } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Calendar,
@@ -35,6 +35,7 @@ const Dashboard: React.FC = () => {
     email: "",
     password: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [intervalType, setIntervalType] = useState<"5min" | "10min">("5min");
   const [loading, setLoading] = useState(false);
 
@@ -88,6 +89,38 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const validateField = (name: string, value: string | number) => {
+    switch (name) {
+      case "name":
+        if (!value) return "Name is required";
+        if ((value as string).length < 3)
+          return "Name must be at least 3 characters";
+        return "";
+      
+      case "email":
+        if (!value) return "Email is required";
+        if (!/^\S+@\S+\.\S+$/.test(value as string))
+          return "Invalid email format";
+        return "";
+
+      case "password":
+        if (!value) return "Password is required";
+        if ((value as string).length < 6)
+          return "Minimum 6 characters required";
+        return "";
+
+      default:
+        return "";
+    }
+  };
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setNewEmployee({ ...newEmployee, [e.target.name]: e.target.value });
+
+    const errorMsg = validateField(e.target.name, e.target.value);
+    setErrors({ ...errors, [e.target.name]: errorMsg });
+  };
+
   const handleAddEmployee = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -96,6 +129,7 @@ const Dashboard: React.FC = () => {
       if (response.data.success && response.data.data) {
         alert(`Employee added succesfully!`);
         setNewEmployee({ name: "", email: "", password: "" });
+        setErrors({});
         setShowAddEmployee(false);
         loadEmployees();
       }
@@ -188,34 +222,49 @@ const Dashboard: React.FC = () => {
               >
                 <input
                   type="text"
+                  name="name"
                   placeholder="Name"
                   value={newEmployee.name}
-                  onChange={(e) =>
-                    setNewEmployee({ ...newEmployee, name: e.target.value })
-                  }
-                  className="w-full px-3 py-1 text-sm border rounded"
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2
+                         ${errors.name ? "border-red-500" : "border-gray-300"}`}
                   required
                 />
+                {errors.name && (
+                  <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                )}
                 <input
                   type="email"
+                  name="email"
                   placeholder="Email"
                   value={newEmployee.email}
-                  onChange={(e) =>
-                    setNewEmployee({ ...newEmployee, email: e.target.value })
-                  }
-                  className="w-full px-3 py-1 text-sm border rounded"
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2
+                         ${
+                           errors.email ? "border-red-500" : "border-gray-300"
+                         }`}
                   required
                 />
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                )}
                 <input
                   type="password"
+                  name="password"
                   placeholder="Password"
                   value={newEmployee.password}
-                  onChange={(e) =>
-                    setNewEmployee({ ...newEmployee, password: e.target.value })
-                  }
-                  className="w-full px-3 py-1 text-sm border rounded"
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:ring-2
+                         ${
+                           errors.password
+                             ? "border-red-500"
+                             : "border-gray-300"
+                         }`}
                   required
                 />
+                {errors.password && (
+                  <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                )}
                 <button
                   type="submit"
                   className="w-full bg-blue-600 text-white py-1 text-sm rounded hover:bg-blue-700"

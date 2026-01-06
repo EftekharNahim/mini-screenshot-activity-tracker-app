@@ -2,7 +2,6 @@ import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import JwtService from '#services/jwt_service'
 import Company from '#models/company'
-import User from '#models/user'
 
 export default class AuthAdminMiddleware {
   async handle({ request, response }: HttpContext, next: NextFn) {
@@ -18,8 +17,6 @@ export default class AuthAdminMiddleware {
       request.company = {
         id: company.id,
         companyName: company.companyName,
-        ownerName: company.ownerName,
-        ownerEmail: company.ownerEmail,
         planId: company.planId,
         plan: company.plan
       }
