@@ -6,10 +6,18 @@ import Company from '#models/company'
 export default class AuthAdminMiddleware {
   async handle({ request, response }: HttpContext, next: NextFn) {
     try {
-      const authHeader = request.header('Authorization')
-      const token = JwtService.extractToken(authHeader)
-      const decoded = JwtService.verifyAdminToken(token)
+      // Try cookie first, then Authorization header (for Postman)
+      const token = request.cookie('authToken') || 
+                    (request.header('Authorization')?.replace('Bearer ', ''))
       
+      if (!token) {
+        return response.status(401).json({
+          success: false,
+          message: 'Unauthorized: No token provided'
+        })
+      }
+      
+      const decoded = JwtService.verifyAdminToken(token)
       // Fetch company details
       const company = await Company.findOrFail(decoded.companyId) 
       

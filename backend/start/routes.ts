@@ -15,6 +15,7 @@ router.group(() => {
   router.get('/plans', '#controllers/companies_controller.plans')
   router.post('/signup', '#controllers/companies_controller.signup')
   router.post('/login', '#controllers/companies_controller.login')
+  router.post('/logout', '#controllers/companies_controller.logout') 
 }).prefix('/api/company')
 
 // Employee routes

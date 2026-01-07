@@ -50,7 +50,7 @@ const Login: React.FC = () => {
       const response = await companyAPI.login(formData);
 
       if (response.data.success && response.data.data) {
-        login(response.data.data.token, "admin", response.data.data.company);
+        login( "admin", response.data.data.company);
         navigate("/dashboard");
       }
     } catch (err: any) {

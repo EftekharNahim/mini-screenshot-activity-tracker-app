@@ -3,7 +3,7 @@ import Company from '#models/company'
 import Plan from '#models/plan'
 import hash from '@adonisjs/core/services/hash'
 import JwtService from '#services/jwt_service'
-import { companySignupValidator , companyLoginValidator } from '../validators/company_validator.js'
+import { companySignupValidator, companyLoginValidator } from '../validators/company_validator.js'
 import User from '#models/user'
 
 
@@ -14,7 +14,7 @@ export default class CompaniesController {
   async plans({ response }: HttpContext) {
     try {
       const plans = await Plan.query().orderBy('price_per_employee', 'asc')
-      
+
       return response.json({
         success: true,
         data: plans
@@ -41,13 +41,13 @@ export default class CompaniesController {
         return response.status(400).json({
           success: false,
           message: 'Email already registered'
-          
+
         })
       }
 
       // Check if plan exists
       const plan = await Plan.find(payload.plan_id)
-     console.log('plan : ',plan);
+      console.log('plan : ', plan);
       if (!plan) {
         console.log('Invalid plan selected');
         return response.status(400).json({
@@ -58,7 +58,7 @@ export default class CompaniesController {
 
       // Hash password
       const hashedPassword = await hash.make(payload.password)
-   console.log('Hashed password:', payload);
+      console.log('Hashed password:', payload);
       // Create company
       const company = await Company.create({
         companyName: payload.company_name,
@@ -76,10 +76,28 @@ export default class CompaniesController {
         role: 'admin',
         tokenVersion: 0
       })
-  console.log('Company created with ID:', company.id);
+      console.log('Company created with ID:', company.id);
       // Generate admin token
       const token = JwtService.generateAdminToken(company.id, company.id)
       console.log('Generated token:', token);
+
+      // Set HTTP-only cookie
+      response.cookie('authToken', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        path: '/'
+      })
+
+      // Set user type cookie (not sensitive)
+      response.cookie('userType', 'admin', {
+        httpOnly: false, // Can be read by JS for routing
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        path: '/'
+      })
 
       return response.status(201).json({
         success: true,
@@ -114,7 +132,7 @@ export default class CompaniesController {
       // Find user
       const user = await User.query()
         .where('email', payload.email)
-        .andWhere('role', 'admin')  
+        .andWhere('role', 'admin')
         .first()
 
       if (!user) {
@@ -125,7 +143,7 @@ export default class CompaniesController {
       }
       // Verify password
       const isValidPassword = await hash.verify(user.password, payload.password)
-      
+
       if (!isValidPassword) {
         return response.status(401).json({
           success: false,
@@ -133,7 +151,7 @@ export default class CompaniesController {
         })
       }
       // Fetch company
-      const company = await Company.find(user.companyId)  
+      const company = await Company.find(user.companyId)
       if (!company) {
         return response.status(500).json({
           success: false,
@@ -143,6 +161,23 @@ export default class CompaniesController {
       await company.load('plan')
       // Generate token
       const token = JwtService.generateAdminToken(company.id, company.id)
+
+      // Set HTTP-only cookie
+      response.cookie('authToken', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        path: '/'
+      })
+
+      response.cookie('userType', 'admin', {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        path: '/'
+      })
 
       return response.json({
         success: true,
@@ -167,5 +202,18 @@ export default class CompaniesController {
         errors: error.messages || error.message
       })
     }
+  }
+
+  /**
+   * Logout
+   */
+  async logout({ response }: HttpContext) {
+    response.clearCookie('authToken')
+    response.clearCookie('userType')
+
+    return response.json({
+      success: true,
+      message: 'Logged out successfully'
+    })
   }
 }

@@ -1,58 +1,58 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { ReactNode } from 'react';
-import type { AuthContextType, UserType, Company, Employee } from '../types';
+// src/contexts/AuthContext.tsx
+import React, { createContext, useContext, useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
+import { cookieUtils } from '../utils/cookies'
+import type { AuthContextType, UserType, Company, Employee } from '../types'
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | null>(null)
 
 interface AuthProviderProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<Company | Employee | null>(null);
-  const [userType, setUserType] = useState<UserType | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<Company | Employee | null>(null)
+  const [userType, setUserType] = useState<UserType | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check for existing auth on mount
-    const token = localStorage.getItem('authToken');
-    const type = localStorage.getItem('userType') as UserType | null;
-    const userData = localStorage.getItem('userData');
+    // Check for userType cookie (this is readable by JS)
+    const type = cookieUtils.get('userType') as UserType | null
+    const userData = localStorage.getItem('userData') // Still use localStorage for user data
 
-    if (token && type && userData) {
-      setUserType(type);
-      setUser(JSON.parse(userData));
+    if (type && userData) {
+      setUserType(type)
+      setUser(JSON.parse(userData))
     }
-    setLoading(false);
-  }, []);
+    setLoading(false)
+  }, [])
 
-  const login = (token: string, type: UserType, userData: Company | Employee) => {
-    localStorage.setItem('authToken', token);
-    localStorage.setItem('userType', type);
-    localStorage.setItem('userData', JSON.stringify(userData));
-    setUserType(type);
-    setUser(userData);
-  };
+  const login = (type: UserType, userData: Company | Employee) => {
+    cookieUtils.set('userType', type, { expires: 30 }) // 30 days
+    localStorage.setItem('userData', JSON.stringify(userData))
+    setUserType(type)
+    setUser(userData)
+  }
 
   const logout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userType');
-    localStorage.removeItem('userData');
-    setUserType(null);
-    setUser(null);
-  };
+    // Cookies will be cleared by backend
+    cookieUtils.remove('userType')
+    localStorage.removeItem('userData')
+    setUserType(null)
+    setUser(null)
+  }
 
   return (
     <AuthContext.Provider value={{ user, userType, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
 
 export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider')
   }
-  return context;
-};
+  return context
+}

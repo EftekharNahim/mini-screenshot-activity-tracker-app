@@ -102,7 +102,7 @@ export type UserType = 'admin' | 'employee';
 export interface AuthContextType {
   user: Company | Employee | null;
   userType: UserType | null;
-  login: (token: string, type: UserType, userData: Company | Employee) => void;
+  login: (type: UserType, userData: Company | Employee) => void;
   logout: () => void;
   loading: boolean;
 }
