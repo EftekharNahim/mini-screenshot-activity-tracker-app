@@ -86,7 +86,7 @@ export default class CompaniesController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // HTTPS only in production
         sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        maxAge: '30d', // 30 days
         path: '/'
       })
 
@@ -95,7 +95,7 @@ export default class CompaniesController {
         httpOnly: false, // Can be read by JS for routing
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60 * 1000,
+        maxAge: '30d',
         path: '/'
       })
 
@@ -167,7 +167,7 @@ export default class CompaniesController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60 * 1000,
+        maxAge: '30d',
         path: '/'
       })
 
@@ -175,7 +175,7 @@ export default class CompaniesController {
         httpOnly: false,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60 * 1000,
+        maxAge: '30d',
         path: '/'
       })
 

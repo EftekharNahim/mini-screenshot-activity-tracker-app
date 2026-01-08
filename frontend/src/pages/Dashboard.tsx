@@ -12,7 +12,7 @@ import {
   Image,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { employeeAPI, screenshotAPI } from "../services/api";
+import { companyAPI, employeeAPI, screenshotAPI } from "../services/api";
 import type { Employee, DashboardData, Company } from "../types";
 
 const Dashboard: React.FC = () => {
@@ -160,8 +160,14 @@ const Dashboard: React.FC = () => {
   };
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    try {
+      companyAPI.logout();
+       logout();
+       navigate("/login");
+    }
+    catch (error) {
+      console.error("Error during logout:", error);
+    }
   };
 
   const formatTime = (

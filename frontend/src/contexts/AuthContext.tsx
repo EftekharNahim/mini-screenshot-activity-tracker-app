@@ -3,8 +3,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { cookieUtils } from '../utils/cookies'
 import type { AuthContextType, UserType, Company, Employee } from '../types'
-import { companyAPI } from '../services/api'
-
 const AuthContext = createContext<AuthContextType | null>(null)
 
 interface AuthProviderProps {
@@ -37,9 +35,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     // Cookies will be cleared by backend
-    companyAPI.logout().catch((err) => {
-      console.error('Error during logout API call:', err)
-    })
     cookieUtils.remove('userType')
     localStorage.removeItem('userData')
     setUserType(null)
