@@ -109,7 +109,7 @@ export default class ScreenshotsController {
       }
 
       // Get all screenshots for the employee on specified date
-      const screenshots = await db.from('screenshots')
+      const screenshot=  db.from('screenshots')
         .select(
           'id',
           'file_path',
@@ -122,7 +122,10 @@ export default class ScreenshotsController {
         )
         .where('employee_id', employeeId)
         .where('screenshot_date', date)
-        .orderBy('uploaded_at', 'asc')
+        .orderBy('uploaded_at', 'asc') 
+      console.log('Fetching screenshots with query:', screenshot.toQuery())
+      
+      const screenshots = await screenshot
 
       // Group screenshots by hour and intervals
       const groupedData: any = {}

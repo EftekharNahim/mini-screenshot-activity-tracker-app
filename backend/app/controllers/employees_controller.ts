@@ -65,14 +65,29 @@ export default class EmployeesController {
   async list({ request, response }: HttpContext) {
     try {
       const companyId = request.company!.id
-      
+
+      // Read page/limit from query string with defaults
+      const rawPage = request.input('page', 1)
+      const rawLimit = request.input('limit', 10)
+
+      // Parse and sanitize
+      let page = parseInt(String(rawPage), 10)
+      let limit = parseInt(String(rawLimit), 10)
+
+      if (Number.isNaN(page) || page < 1) page = 1
+      if (Number.isNaN(limit) || limit < 1) limit = 10
+
+      // Optional: cap limit to avoid huge queries
+      const MAX_LIMIT = 100
+      if (limit > MAX_LIMIT) limit = MAX_LIMIT
 
       const employees = await User.query()
         .where('company_id', companyId)
         .andWhere('role', 'employee')
         .select('id', 'name', 'email', 'is_active', 'created_at')
         .orderBy('created_at', 'desc')
-        
+        .paginate(page, limit)
+
 
       return response.json({
         success: true,

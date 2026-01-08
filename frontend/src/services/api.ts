@@ -53,8 +53,11 @@ export const employeeAPI = {
   add: (data: EmployeeCreateData) =>
     api.post<ApiResponse<{ id: number; name: string; email: string; company_id: number; token: string }>>('/employee/add', data),
 
-  list: () =>
-    api.get<ApiResponse<Employee[]>>('/employee/list'),
+  list: (page: number = 1, limit: number = 10) =>
+    api.get<ApiResponse<{ data: Employee[]; meta: any }>>('/employee/list', {
+      params: { page, limit },
+    }),
+
 
   search: (query: string) =>
     api.get<ApiResponse<Employee[]>>('/employee/search', { params: { query } }),

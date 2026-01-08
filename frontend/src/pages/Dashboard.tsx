@@ -38,6 +38,10 @@ const Dashboard: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [intervalType, setIntervalType] = useState<"5min" | "10min">("5min");
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [perPage, setPerPage] = useState<number>(10); // default limit
+  const perPageOptions = [5, 10, 20, 50];
 
   useEffect(() => {
     if (userType !== "admin") {
@@ -53,14 +57,19 @@ const Dashboard: React.FC = () => {
     }
   }, [selectedEmployee, selectedDate]);
 
-  const loadEmployees = async () => {
+  const loadEmployees = async (page = currentPage, limit = perPage) => {
     setLoading(true);
     try {
-      const response = await employeeAPI.list();
+      const response = await employeeAPI.list(page, limit); // pass page & limit
       if (response.data.success && response.data.data) {
-        setEmployees(response.data.data);
-        if (response.data.data.length > 0 && !selectedEmployee) {
-          setSelectedEmployee(response.data.data[0]);
+        const { data, meta } = response.data.data; // meta + data
+        // console.log("Employee list response meta:", meta);
+        setEmployees(data);
+        setCurrentPage(meta.currentPage);
+        setTotalPages(meta.lastPage);
+        setPerPage(meta.perPage);
+        if (data.length > 0 && !selectedEmployee) {
+          setSelectedEmployee(data[0]);
         }
       }
     } catch (error) {
@@ -96,7 +105,7 @@ const Dashboard: React.FC = () => {
         if ((value as string).length < 3)
           return "Name must be at least 3 characters";
         return "";
-      
+
       case "email":
         if (!value) return "Email is required";
         if (!/^\S+@\S+\.\S+$/.test(value as string))
@@ -162,10 +171,9 @@ const Dashboard: React.FC = () => {
   const handleLogout = () => {
     try {
       companyAPI.logout();
-       logout();
-       navigate("/login");
-    }
-    catch (error) {
+      logout();
+      navigate("/login");
+    } catch (error) {
       console.error("Error during logout:", error);
     }
   };
@@ -182,6 +190,13 @@ const Dashboard: React.FC = () => {
       "0"
     )} - ${formatHour}:${String(endMin).padStart(2, "0")} ${period}`;
   };
+
+  console.log(
+    "Rendering Dashboard with currentPage:",
+    currentPage,
+    "totalPages:",
+    totalPages
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -297,6 +312,25 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
 
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">Per page:</span>
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  const newLimit = parseInt(e.target.value, 10);
+                  setPerPage(newLimit);
+                  loadEmployees(1, newLimit); // reset to page 1
+                }}
+                className="px-2 py-1 border border-gray-300 rounded-lg text-sm"
+              >
+                {perPageOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {employees.map((emp) => (
                 <div
@@ -312,6 +346,33 @@ const Dashboard: React.FC = () => {
                   <p className="text-xs text-gray-600">{emp.email}</p>
                 </div>
               ))}
+            </div>
+            <div className="flex justify-between items-center mt-4">
+              <button
+                onClick={() => {
+                  if (currentPage > 1) loadEmployees(currentPage - 1, perPage);
+                }}
+                disabled={currentPage === 1}
+                className="px-3 py-1 cursor-pointer bg-gray-200 rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
+
+              <p className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </p>
+
+              <button
+                onClick={() => {
+                  if (currentPage < totalPages)
+                    loadEmployees(currentPage + 1, perPage);
+                  console.log("Next page clicked");
+                }}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 cursor-pointer bg-gray-200 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
             </div>
           </div>
 

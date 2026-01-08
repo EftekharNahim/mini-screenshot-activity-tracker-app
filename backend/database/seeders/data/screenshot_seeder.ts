@@ -1,59 +1,74 @@
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
+import Screenshot from '#models/screenshot'
+import Company from '#models/company'
+import User from '#models/user'
+import { faker } from '@faker-js/faker'
+import { DateTime } from 'luxon'
 
 export default class ScreenshotSeeder extends BaseSeeder {
   public async run() {
-    console.log('Fetching users for screenshot mapping...')
-    
-    // Use this.client instead of global Database
-    const users = await this.client.from('users').select('id', 'company_id')
-    if (!users.length) {
-      throw new Error('No users found. Run UserSeeder first.')
+    const totalScreenshots = 1000
+    const chunkSize = 1000
+
+    console.log('🚀 Starting Screenshot Seeder...')
+
+    // Fetch all companies
+    console.log('📦 Fetching all companies...')
+    const companies = await Company.all()
+    const companyIds = companies.map((c) => c.id)
+    console.log(`✅ Found ${companyIds.length} companies.`)
+
+
+    // Fetch all users
+    console.log('👤 Fetching all users...')
+    const users = await User.all()
+    const userIds = users.map((u) => u.id)
+    console.log(`✅ Found ${userIds.length} users.`)
+
+    if (companyIds.length === 0 || userIds.length === 0) {
+      console.log('❌ No companies or users found. Please seed them first.')
+      return
     }
 
-    const TOTAL_SCREENSHOTS = 1000000
-    const CHUNK = 5000
-    
-    // Pre-calculate date range to avoid Luxon overhead inside the loop
-    const nowTs = Date.now()
-    const twoYearsAgoTs = nowTs - (2 * 365 * 24 * 60 * 60 * 1000)
+    console.log(`📝 Seeding ${totalScreenshots} screenshots in chunks of ${chunkSize}...`)
 
-    console.log(`Seeding ${TOTAL_SCREENSHOTS} screenshots...`)
+    // Define date range for created_at
+    const startDate = DateTime.fromISO('2026-01-08')
+    const endDate = DateTime.fromISO('2026-01-09')
 
-    for (let start = 0; start < TOTAL_SCREENSHOTS; start += CHUNK) {
-      const batch = []
-      const end = Math.min(start + CHUNK, TOTAL_SCREENSHOTS)
 
-      for (let i = start; i < end; i++) {
-        const user = users[Math.floor(Math.random() * users.length)]
+    for (let i = 0; i < totalScreenshots; i += chunkSize) {
+      const screenshots: Partial<Screenshot>[] = []
+
+      for (let j = 0; j < chunkSize && i + j < totalScreenshots; j++) {
+        const companyId = companyIds[Math.floor(Math.random() * companyIds.length)]
+        const employeeId = userIds[Math.floor(Math.random() * userIds.length)]
+
+        // ✅ Correct Faker usage for TypeScript
+        const created_at = faker.date.between({
+          from: startDate.toJSDate(),
+          to: endDate.toJSDate(),
+        })
+        const createDateTime = DateTime.fromJSDate(created_at)
+   
+
+        screenshots.push({
+          companyId,
+          employeeId,
+          filePath: 'https://res.cloudinary.com/ddqobowri/image/upload/v1767763021/image_of_screenshots/whqxa9l0xja9yhlsx4rl.png',
+          fileSize: faker.number.int({ min: 50000, max: 5000000 }),
+          uploadedAt: createDateTime,
+          // Virtual columns will be auto-calculated in the DB
         
-        // Fast random date generation
-        const randomTs = Math.floor(Math.random() * (nowTs - twoYearsAgoTs) + twoYearsAgoTs)
-        const d = new Date(randomTs)
-        
-        // Manual formatting is much faster than Luxon for 2M iterations
-        const uploadedAt = d.toISOString() // "YYYY-MM-DDTHH:mm:ss.sssZ"
-        const screenshotDate = uploadedAt.split('T')[0]
-
-        batch.push({
-          company_id: user.company_id,
-          employee_id: user.id,
-          file_path: `https://res.cloudinary.com/dktsviile/image/upload/v1767681249/screenshots/1/3/screenshot-1767681312220.png`,
-          file_size: Math.floor(Math.random() * (2000000 - 10000) + 10000),
-          uploaded_at: uploadedAt,
-          screenshot_date: screenshotDate,
-          screenshot_hour: d.getUTCHours(),
-          screenshot_minute: d.getUTCMinutes(),
         })
       }
 
-      // Use this.client.table() to stay within the DatabaseSeeder transaction
-      await this.client.table('screenshots').multiInsert(batch)
-      
-      if (start % 50000 === 0) {
-        console.log(`Progress: ${((start / TOTAL_SCREENSHOTS) * 100).toFixed(1)}%`)
-      }
+      await Screenshot.createMany(screenshots)
+      console.log(
+        `📌 Inserted ${i + screenshots.length} / ${totalScreenshots} screenshots so far...`
+      )
     }
 
-    console.log('Screenshots seeded successfully.')
+    console.log('🎉 All screenshots seeded successfully!')
   }
 }
